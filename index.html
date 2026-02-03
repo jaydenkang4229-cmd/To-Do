@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TO-DO</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #ffffff;
+            --accent: #bb86fc;
+            --success: #03dac6;
+            --error: #cf6679;
+            --warning: #ffb74d;
+            --heavy-glow: rgba(88, 86, 214, 0);
+        }
+
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            transition: background-color 0.8s ease;
+        }
+
+        /* The heavy load glow container */
+        .bottom-glow {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0;
+            background: linear-gradient(to top, var(--heavy-glow), transparent);
+            pointer-events: none;
+            z-index: 5;
+            transition: all 0.5s ease;
+        }
+
+        h1 { margin-bottom: 20px; font-weight: 300; letter-spacing: 2px; }
+
+        /* --- Floating Action Button (FAB) --- */
+        .fab {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            font-weight: bold;
+            color: black;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            cursor: pointer;
+            z-index: 1000;
+            transition: transform 0.2s;
+            border: none;
+        }
+        .fab:active { transform: scale(0.9); }
+
+        /* --- Popup Input Section --- */
+        .popup-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: flex-end; 
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .controls {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .popup-active .popup-overlay { display: flex; opacity: 1; }
+        .popup-active .controls { transform: translateY(0); }
+
+        .close-popup {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: auto;
+        }
+
+        input[type="text"], input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            background: #2c2c2c;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        
+        input[type="date"] {
+            -webkit-appearance: none;
+            appearance: none;
+            min-height: 45px; 
+        }
+
+        label { display: block; margin-bottom: 5px; font-size: 0.9em; color: #aaa; }
+        
+        .slider-container { margin-bottom: 15px; }
+        
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent);
+            height: 6px;
+            background: #444;
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        button.add-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--accent);
+            color: black;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* --- List Section --- */
+        #todo-list {
+            width: 100%;
+            max-width: 500px;
+            list-style: none;
+            padding: 0;
+            padding-bottom: 100px; 
+            position: relative;
+            z-index: 10;
+        }
+
+        .todo-item {
+            background: var(--card-bg);
+            margin-bottom: 15px;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border-left: 5px solid var(--accent);
+        }
+
+        .todo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .todo-title { font-weight: bold; word-break: break-word; }
+        .todo-date { 
+            font-size: 0.8em; 
+            color: #aaa; 
+            white-space: nowrap; 
+            margin-left: 10px; 
+            background: rgba(255,255,255,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Dynamic Sizing Classes */
+        .size-1 { transform: scale(0.95); opacity: 0.9; }
+        .size-2 { transform: scale(1); }
+        .size-3 { transform: scale(1.02); font-size: 1.05em; border-left-width: 8px; }
+        .size-4 { transform: scale(1.05); font-size: 1.1em; border-left-width: 10px; }
+        .size-5 { transform: scale(1.08); font-size: 1.2em; border-left-width: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.6); font-weight: bold; }
+
+        /* Progress Slider */
+        .progress-wrapper {
+            margin-top: 10px;
+        }
+        .progress-label {
+            font-size: 0.7em;
+            text-align: right;
+            margin-bottom: 2px;
+            color: #888;
+        }
+        .progress-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            outline: none;
+        }
+        .progress-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--text-color);
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
+        }
+        .progress-slider::-webkit-slider-thumb:active { transform: scale(1.2); }
+
+        .delete-btn {
+            background: transparent;
+            color: #ff5555;
+            border: 1px solid #ff5555;
+            padding: 5px 10px;
+            font-size: 0.8em;
+            margin-top: 10px;
+            width: auto;
+            border-radius: 4px;
+        }
+
+        /* --- Animations --- */
+        @keyframes successPop {
+            0% { transform: scale(1); background-color: var(--success); }
+            50% { transform: scale(1.1); box-shadow: 0 0 30px var(--success); }
+            100% { transform: scale(0); opacity: 0; margin: 0; padding: 0; height: 0; }
+        }
+
+        .completed-anim {
+            animation: successPop 0.8s forwards ease-in-out;
+            pointer-events: none;
+            background-color: var(--success) !important;
+            color: black;
+            border: none;
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            animation: fall linear forwards;
+            z-index: 2000;
+            pointer-events: none;
+        }
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        
+        /* Firework Particles */
+        .firework-particle {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            z-index: 2001;
+            pointer-events: none;
+            animation: fireworkFly 1s ease-out forwards;
+            /* Added box-shadow for brightness/glow */
+            box-shadow: 0 0 8px currentColor;
+        }
+        
+        @keyframes fireworkFly {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)) scale(0.5); opacity: 0; }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            color: #555;
+            margin-top: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .empty-state img {
+            max-width: 90%;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            width: 350px;
+        }
+        .empty-state p {
+            font-size: 1.2em;
+            color: var(--success);
+            font-weight: 300;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>TO-DO</h1>
+
+    <!-- Glow Effect for heavy load -->
+    <div id="bottomGlow" class="bottom-glow"></div>
+
+    <!-- Floating Action Button -->
+    <button class="fab" onclick="togglePopup()">+</button>
+
+    <!-- Popup Input Form -->
+    <div class="popup-overlay" id="popupOverlay" onclick="if(event.target === this) togglePopup()">
+        <div class="controls">
+            <button class="close-popup" onclick="togglePopup()">×</button>
+            <h2 style="margin-top:0; font-weight:300;">New Task</h2>
+            
+            <label>Task Description</label>
+            <input type="text" id="taskInput" placeholder="What needs doing?">
+
+            <label>Due Date</label>
+            <input type="date" id="dateInput">
+
+            <div class="slider-container">
+                <label>Assignment Size (1-5): <span id="sizeVal" style="color:var(--accent); font-weight:bold;">1</span></label>
+                <input type="range" id="sizeInput" min="1" max="5" value="1" oninput="document.getElementById('sizeVal').innerText = this.value">
+            </div>
+
+            <button class="add-btn" onclick="addTask()">ADD TASK</button>
+        </div>
+    </div>
+
+    <ul id="todo-list">
+        <!-- Tasks will appear here -->
+    </ul>
+
+    <script>
+        // 1. Initialize State
+        let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
+        const listEl = document.getElementById('todo-list');
+        const glowEl = document.getElementById('bottomGlow');
+
+        // 2. Toggle Popup
+        function togglePopup() {
+            document.body.classList.toggle('popup-active');
+            if(document.body.classList.contains('popup-active')) {
+                document.getElementById('taskInput').focus();
+                
+                // Set default date to today so calendar opens on current month/day
+                const today = new Date().toISOString().split('T')[0];
+                const dateInput = document.getElementById('dateInput');
+                if(!dateInput.value) {
+                    dateInput.value = today;
+                }
+            }
+        }
+
+        // 3. Render List
+        function renderTasks() {
+            listEl.innerHTML = '';
+            
+            // Sort: Closest date first
+            tasks.sort((a, b) => {
+                if (!a.date) return 1;
+                if (!b.date) return -1;
+                return new Date(a.date) - new Date(b.date);
+            });
+
+            // Calculate Load Score for Visual Effects
+            let loadScore = 0;
+            tasks.forEach(task => {
+                if (parseInt(task.size) >= 4) {
+                    loadScore += parseInt(task.size);
+                }
+            });
+            updateVisuals(loadScore);
+
+            // Empty State
+            if (tasks.length === 0) {
+                listEl.innerHTML = `
+                    <div class="empty-state">
+                        <!-- PASTE YOUR IMAGE LINK BELOW in the src="" attribute -->
+                        <!-- FIX: The previous link was a website, this is a direct image link (.jpg) -->
+                        <img src="data:image/jpeg;base64,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" alt="Chill guy">
+                        <p>Nothing here, you're all good to chill.</p>
+                    </div>`;
+                return;
+            }
+
+            // Render Items
+            tasks.forEach((task, index) => {
+                const li = document.createElement('li');
+                li.className = `todo-item size-${task.size}`;
+                li.id = `task-${index}`;
+                
+                const progressColor = `linear-gradient(90deg, var(--accent) ${task.progress}%, #333 ${task.progress}%)`;
+                
+                let dateDisplay = '';
+                if (task.date) {
+                    const dateObj = new Date(task.date + 'T00:00:00'); 
+                    dateDisplay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                }
+
+                li.innerHTML = `
+                    <div class="todo-header">
+                        <span class="todo-title">${task.text}</span>
+                        ${dateDisplay ? `<span class="todo-date">${dateDisplay}</span>` : ''}
+                    </div>
+                    <div class="progress-wrapper">
+                        <div class="progress-label">${task.progress}% Done</div>
+                        <input type="range" 
+                               class="progress-slider" 
+                               min="0" max="100" 
+                               value="${task.progress}" 
+                               style="background: ${progressColor}"
+                               oninput="updateProgress(${index}, this.value, this)"
+                               ontouchstart="event.stopPropagation()">
+                    </div>
+                    <button class="delete-btn" onclick="deleteTask(${index})">Remove</button>
+                `;
+                listEl.appendChild(li);
+            });
+        }
+
+        // Handle Visuals (Glow + Background Darkening)
+        function updateVisuals(score) {
+            // Reverted intensity to be slower (Turn 4 Logic)
+            if (score < 4) {
+                glowEl.style.height = '0';
+                glowEl.style.setProperty('--heavy-glow', 'rgba(88, 86, 214, 0)');
+                document.body.style.backgroundColor = 'var(--bg-color)'; // Default Grey
+            } else {
+                // Slower growth calculation
+                const intensity = Math.min(score / 25, 0.9); 
+                const height = Math.min(score * 20, 350); // Caps at 350px
+
+                glowEl.style.height = height + 'px';
+                glowEl.style.setProperty('--heavy-glow', `rgba(88, 86, 255, ${intensity})`);
+                
+                // Background Darkening (slower threshold)
+                if (score > 8) {
+                    document.body.style.backgroundColor = '#050505'; 
+                } else {
+                    document.body.style.backgroundColor = '#0e0e0e';
+                }
+            }
+        }
+
+        // 4. Add Task
+        function addTask() {
+            const textInput = document.getElementById('taskInput');
+            const dateInput = document.getElementById('dateInput');
+            const sizeInput = document.getElementById('sizeInput');
+
+            if (textInput.value.trim() === "") {
+                textInput.style.borderColor = "var(--error)";
+                setTimeout(() => textInput.style.borderColor = "#444", 1500);
+                return;
+            }
+
+            const newTask = {
+                text: textInput.value,
+                date: dateInput.value,
+                size: sizeInput.value,
+                progress: 0
+            };
+
+            tasks.push(newTask);
+            saveAndRender();
+            
+            textInput.value = '';
+            dateInput.value = new Date().toISOString().split('T')[0];
+            sizeInput.value = '1';
+            document.getElementById('sizeVal').innerText = '1';
+            togglePopup();
+        }
+
+        // 5. Update Progress & Confetti
+        function updateProgress(index, value, element) {
+            tasks[index].progress = value;
+            element.style.background = `linear-gradient(90deg, var(--accent) ${value}%, #333 ${value}%)`;
+            element.previousElementSibling.innerText = `${value}% Done`;
+
+            if (value == 100) {
+                const task = tasks[index];
+                const taskItem = document.getElementById(`task-${index}`);
+                taskItem.classList.add('completed-anim');
+                
+                const isBigTask = parseInt(task.size) >= 4;
+                spawnConfetti(isBigTask);
+                
+                // Trigger fireworks only for big tasks
+                if (isBigTask) {
+                    spawnFireworks();
+                }
+
+                setTimeout(() => {
+                    deleteTask(index);
+                }, 800);
+            } else {
+                localStorage.setItem('myTasks', JSON.stringify(tasks));
+            }
+        }
+
+        // 6. Confetti Logic
+        function spawnConfetti(isBig) {
+            const count = isBig ? 300 : 50; 
+            const colors = isBig 
+                ? ['#FFD700', '#E5E4E2', '#ffffff', '#bb86fc', '#5050ff'] 
+                : ['#ff0', '#f00', '#0f0', '#00f', '#0ff', '#f0f']; 
+
+            for(let i=0; i<count; i++) {
+                const conf = document.createElement('div');
+                conf.classList.add('confetti');
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.top = '-10px';
+                conf.style.backgroundColor = colors[Math.floor(Math.random()*colors.length)];
+                
+                const speed = isBig ? (Math.random() * 4 + 2) : (Math.random() * 2 + 1);
+                conf.style.animationDuration = speed + 's';
+                
+                if(isBig) {
+                    const size = Math.random() * 8 + 5;
+                    conf.style.width = size + 'px';
+                    conf.style.height = size + 'px';
+                }
+
+                document.body.appendChild(conf);
+                setTimeout(() => conf.remove(), speed * 1000);
+            }
+        }
+
+        // 7. Fireworks Logic (Bombastic Version)
+        function spawnFireworks() {
+            // Brighter colors
+            const colors = ['#FFD700', '#00ff00', '#ff00ff', '#00ffff', '#ffffff', '#ff4500'];
+            
+            // Increased particle count for "bombastic" feel
+            
+            // Left Corner
+            for(let i=0; i<80; i++) {
+                createFireworkParticle(0, window.innerHeight, colors);
+            }
+            
+            // Right Corner
+            for(let i=0; i<80; i++) {
+                createFireworkParticle(window.innerWidth, window.innerHeight, colors);
+            }
+        }
+
+        function createFireworkParticle(x, y, colors) {
+            const p = document.createElement('div');
+            p.classList.add('firework-particle');
+            p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            p.style.left = x + 'px';
+            p.style.top = y + 'px';
+
+            const xDir = x === 0 ? 1 : -1;
+            
+            // Increased spread
+            const destX = (Math.random() * 400 + 50) * xDir + 'px';
+            const destY = -(Math.random() * 600 + 200) + 'px'; 
+
+            p.style.setProperty('--dx', destX);
+            p.style.setProperty('--dy', destY);
+
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 1000);
+        }
+
+        function deleteTask(index) {
+            tasks.splice(index, 1);
+            saveAndRender();
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('myTasks', JSON.stringify(tasks));
+            renderTasks();
+        }
+
+        renderTasks();
+
+    </script>
+</body>
+</html>
