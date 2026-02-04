@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TO-DO</title>
+    <title>To-Do List</title>
+    
+    <!-- APP LOGO SETUP -->
+    <!-- Save your purple neon image as "logo.jpg" in the same folder as this file -->
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <link rel="apple-touch-icon" href="logo.jpg">
+
     <style>
         :root {
             --bg-color: #121212;
@@ -180,19 +186,60 @@
         .todo-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             margin-bottom: 10px;
         }
 
-        .todo-title { font-weight: bold; word-break: break-word; }
+        .todo-title { 
+            font-weight: bold; 
+            word-break: break-word; 
+            flex-grow: 1;
+            padding-right: 10px;
+        }
+        
         .todo-date { 
-            font-size: 0.8em; 
-            color: #aaa; 
+            color: white; 
             white-space: nowrap; 
             margin-left: 10px; 
             background: rgba(255,255,255,0.1);
-            padding: 2px 6px;
-            border-radius: 4px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-weight: bold;
+            position: relative; 
+            display: inline-block; 
+        }
+        
+        .todo-date:active {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* --- DATE INPUT FIX --- */
+        /* Forces the calendar picker indicator to fill the entire input area */
+        .date-input-overlay {
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            opacity: 0; 
+            z-index: 10; 
+            cursor: pointer; 
+            border: none; 
+            padding: 0; 
+            margin: 0;
+        }
+
+        .date-input-overlay::-webkit-calendar-picker-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            cursor: pointer;
         }
 
         /* Dynamic Sizing Classes */
@@ -204,7 +251,7 @@
 
         /* Progress Slider */
         .progress-wrapper {
-            margin-top: 10px;
+            margin-top: 15px;
         }
         .progress-label {
             font-size: 0.7em;
@@ -232,17 +279,6 @@
             transition: transform 0.1s;
         }
         .progress-slider::-webkit-slider-thumb:active { transform: scale(1.2); }
-
-        .delete-btn {
-            background: transparent;
-            color: #ff5555;
-            border: 1px solid #ff5555;
-            padding: 5px 10px;
-            font-size: 0.8em;
-            margin-top: 10px;
-            width: auto;
-            border-radius: 4px;
-        }
 
         /* --- Animations --- */
         @keyframes successPop {
@@ -282,7 +318,6 @@
             z-index: 2001;
             pointer-events: none;
             animation: fireworkFly 1s ease-out forwards;
-            /* Added box-shadow for brightness/glow */
             box-shadow: 0 0 8px currentColor;
         }
         
@@ -318,7 +353,7 @@
 </head>
 <body>
 
-    <h1>TO-DO</h1>
+    <h1>To-Do List</h1>
 
     <!-- Glow Effect for heavy load -->
     <div id="bottomGlow" class="bottom-glow"></div>
@@ -396,13 +431,14 @@
             if (tasks.length === 0) {
                 listEl.innerHTML = `
                     <div class="empty-state">
-                        <!-- PASTE YOUR IMAGE LINK BELOW in the src="" attribute -->
-                        <!-- FIX: The previous link was a website, this is a direct image link (.jpg) -->
-                        <img src="data:image/jpeg;base64,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" alt="Chill guy">
+                        <img src="https://cdn.decrypt.co/wp-content/uploads/2024/11/chillguy-gID_7.jpg" alt="Chill guy">
                         <p>Nothing here, you're all good to chill.</p>
                     </div>`;
                 return;
             }
+
+            const todayDate = new Date();
+            todayDate.setHours(0,0,0,0);
 
             // Render Items
             tasks.forEach((task, index) => {
@@ -413,15 +449,39 @@
                 const progressColor = `linear-gradient(90deg, var(--accent) ${task.progress}%, #333 ${task.progress}%)`;
                 
                 let dateDisplay = '';
+                let fontSize = '0.9em'; // Default size
+
                 if (task.date) {
-                    const dateObj = new Date(task.date + 'T00:00:00'); 
-                    dateDisplay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    const taskDate = new Date(task.date + 'T00:00:00'); 
+                    dateDisplay = taskDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                    // Calculate days difference for font scaling
+                    const diffTime = taskDate - todayDate;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    // Scale font based on proximity
+                    if (diffDays <= 1) { // Today or past due
+                        fontSize = '1.4em';
+                    } else if (diffDays <= 3) { // Within 3 days
+                        fontSize = '1.2em';
+                    } else if (diffDays <= 7) { // Within a week
+                        fontSize = '1.0em';
+                    }
                 }
 
+                // FIX: Input uses class date-input-overlay for better pointer handling
                 li.innerHTML = `
                     <div class="todo-header">
                         <span class="todo-title">${task.text}</span>
-                        ${dateDisplay ? `<span class="todo-date">${dateDisplay}</span>` : ''}
+                        ${dateDisplay ? `
+                            <span class="todo-date" style="font-size: ${fontSize}">
+                                ${dateDisplay}
+                                <input type="date" 
+                                       class="date-input-overlay"
+                                       onchange="updateDate(${index}, this.value)"
+                                       value="${task.date}">
+                            </span>
+                        ` : ''}
                     </div>
                     <div class="progress-wrapper">
                         <div class="progress-label">${task.progress}% Done</div>
@@ -433,28 +493,31 @@
                                oninput="updateProgress(${index}, this.value, this)"
                                ontouchstart="event.stopPropagation()">
                     </div>
-                    <button class="delete-btn" onclick="deleteTask(${index})">Remove</button>
                 `;
                 listEl.appendChild(li);
             });
         }
 
+        function updateDate(index, newDate) {
+            if (newDate) {
+                tasks[index].date = newDate;
+                saveAndRender();
+            }
+        }
+
         // Handle Visuals (Glow + Background Darkening)
         function updateVisuals(score) {
-            // Reverted intensity to be slower (Turn 4 Logic)
             if (score < 4) {
                 glowEl.style.height = '0';
                 glowEl.style.setProperty('--heavy-glow', 'rgba(88, 86, 214, 0)');
-                document.body.style.backgroundColor = 'var(--bg-color)'; // Default Grey
+                document.body.style.backgroundColor = 'var(--bg-color)'; 
             } else {
-                // Slower growth calculation
                 const intensity = Math.min(score / 25, 0.9); 
-                const height = Math.min(score * 20, 350); // Caps at 350px
+                const height = Math.min(score * 20, 350); 
 
                 glowEl.style.height = height + 'px';
                 glowEl.style.setProperty('--heavy-glow', `rgba(88, 86, 255, ${intensity})`);
                 
-                // Background Darkening (slower threshold)
                 if (score > 8) {
                     document.body.style.backgroundColor = '#050505'; 
                 } else {
@@ -506,7 +569,6 @@
                 const isBigTask = parseInt(task.size) >= 4;
                 spawnConfetti(isBigTask);
                 
-                // Trigger fireworks only for big tasks
                 if (isBigTask) {
                     spawnFireworks();
                 }
@@ -549,17 +611,12 @@
 
         // 7. Fireworks Logic (Bombastic Version)
         function spawnFireworks() {
-            // Brighter colors
             const colors = ['#FFD700', '#00ff00', '#ff00ff', '#00ffff', '#ffffff', '#ff4500'];
             
-            // Increased particle count for "bombastic" feel
-            
-            // Left Corner
             for(let i=0; i<80; i++) {
                 createFireworkParticle(0, window.innerHeight, colors);
             }
             
-            // Right Corner
             for(let i=0; i<80; i++) {
                 createFireworkParticle(window.innerWidth, window.innerHeight, colors);
             }
@@ -574,7 +631,6 @@
 
             const xDir = x === 0 ? 1 : -1;
             
-            // Increased spread
             const destX = (Math.random() * 400 + 50) * xDir + 'px';
             const destY = -(Math.random() * 600 + 200) + 'px'; 
 
