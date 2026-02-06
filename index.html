@@ -6,7 +6,6 @@
     <title>To-Do List</title>
     
     <!-- APP LOGO SETUP -->
-    <!-- Save your purple neon image as "logo.jpg" in the same folder as this file -->
     <link rel="icon" type="image/jpeg" href="logo.jpg">
     <link rel="apple-touch-icon" href="logo.jpg">
 
@@ -95,6 +94,8 @@
             border-radius: 20px 20px 0 0;
             width: 100%;
             max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
             box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
             transform: translateY(100%);
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -136,16 +137,70 @@
 
         label { display: block; margin-bottom: 5px; font-size: 0.9em; color: #aaa; }
         
-        .slider-container { margin-bottom: 15px; }
+        /* --- TABS SECTION IN POPUP --- */
+        .tabs-section {
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #252525;
+            border-radius: 8px;
+        }
+        .saved-tabs-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .tab-chip {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            color: white;
+            cursor: pointer;
+            border: 2px solid transparent;
+            opacity: 0.7;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .tab-chip.selected {
+            border-color: white;
+            opacity: 1;
+            transform: scale(1.05);
+            box-shadow: 0 0 8px rgba(255,255,255,0.3);
+        }
+        .new-tab-inputs {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+        
+        /* --- SLIDER IMPROVEMENTS --- */
+        .slider-container { margin-bottom: 20px; }
         
         input[type="range"] {
+            -webkit-appearance: none;
             width: 100%;
-            accent-color: var(--accent);
-            height: 6px;
+            height: 15px;
             background: #444;
-            border-radius: 5px;
+            border-radius: 10px;
             outline: none;
             cursor: pointer;
+            margin: 10px 0;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 30px;
+            height: 30px;
+            background: var(--text-color);
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
 
         button.add-btn {
@@ -158,6 +213,63 @@
             font-weight: bold;
             font-size: 16px;
             cursor: pointer;
+        }
+
+        button.small-btn {
+            padding: 8px;
+            font-size: 0.8em;
+            width: auto;
+            margin-top: 0;
+        }
+
+        /* --- PINNED SECTION --- */
+        #pinned-section {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+            display: none; 
+        }
+        .pinned-card {
+            background: linear-gradient(135deg, #2a2a2a, #222);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(187, 134, 252, 0.2);
+            position: relative;
+        }
+        .time-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #444;
+            border-radius: 3px;
+            margin-top: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        .time-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.5s;
+        }
+        .completion-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #444;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .completion-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.5s;
+        }
+        .pinned-stat-label {
+            font-size: 0.7em;
+            color: #888;
+            margin-top: 5px;
         }
 
         /* --- List Section --- */
@@ -174,13 +286,48 @@
         .todo-item {
             background: var(--card-bg);
             margin-bottom: 15px;
+            /* Added margin-top to allow tab to sit outside */
+            margin-top: 30px; 
             border-radius: 12px;
             padding: 15px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             transition: all 0.3s ease;
             position: relative;
-            overflow: hidden;
+            /* Allow tab to stick out */
+            overflow: visible; 
             border-left: 5px solid var(--accent);
+        }
+        
+        .todo-item.overdue {
+            border-left-color: var(--error);
+        }
+        .todo-item.overdue .todo-date {
+            color: var(--error);
+            background: rgba(207, 102, 121, 0.15);
+        }
+        .overdue-icon {
+            color: var(--error);
+            font-size: 1.2em;
+            margin-right: 5px;
+            display: none;
+        }
+        .todo-item.overdue .overdue-icon {
+            display: inline;
+        }
+
+        /* UPDATED: File Folder Tab Style */
+        .tab-badge {
+            position: absolute;
+            top: -24px; /* Sits on top */
+            left: 0;
+            padding: 4px 15px;
+            border-radius: 8px 8px 0 0; /* Curved top */
+            font-size: 0.75em;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            z-index: 1; /* Ensure visible */
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
         }
 
         .todo-header {
@@ -195,6 +342,8 @@
             word-break: break-word; 
             flex-grow: 1;
             padding-right: 10px;
+            display: flex;
+            align-items: center;
         }
         
         .todo-date { 
@@ -211,35 +360,32 @@
             display: inline-block; 
         }
         
-        .todo-date:active {
-            background: rgba(255,255,255,0.3);
+        /* UPDATED: Pin Icon SVG styling */
+        .pin-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0 0 0 10px;
+            display: flex;
+            align-items: center;
+        }
+        .pin-icon {
+            width: 20px;
+            height: 20px;
+            fill: #555;
+            transition: fill 0.3s;
+        }
+        .pin-btn.active .pin-icon {
+            fill: var(--accent);
         }
 
         /* --- DATE INPUT FIX --- */
-        /* Forces the calendar picker indicator to fill the entire input area */
         .date-input-overlay {
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            opacity: 0; 
-            z-index: 10; 
-            cursor: pointer; 
-            border: none; 
-            padding: 0; 
-            margin: 0;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            opacity: 0; z-index: 10; cursor: pointer; border: none; padding: 0; margin: 0;
         }
-
         .date-input-overlay::-webkit-calendar-picker-indicator {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            cursor: pointer;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 0; cursor: pointer;
         }
 
         /* Dynamic Sizing Classes */
@@ -250,77 +396,33 @@
         .size-5 { transform: scale(1.08); font-size: 1.2em; border-left-width: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.6); font-weight: bold; }
 
         /* Progress Slider */
-        .progress-wrapper {
-            margin-top: 15px;
-        }
+        .progress-wrapper { margin-top: 15px; }
         .progress-label {
-            font-size: 0.7em;
-            text-align: right;
-            margin-bottom: 2px;
-            color: #888;
+            font-size: 0.7em; text-align: right; margin-bottom: 2px; color: #888;
         }
-        .progress-slider {
-            width: 100%;
-            -webkit-appearance: none;
-            height: 10px;
-            background: #333;
-            border-radius: 5px;
-            outline: none;
-        }
-        .progress-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            background: var(--text-color);
-            cursor: pointer;
-            border-radius: 50%;
-            box-shadow: 0 0 5px rgba(0,0,0,0.5);
-            transition: transform 0.1s;
-        }
-        .progress-slider::-webkit-slider-thumb:active { transform: scale(1.2); }
-
-        /* --- Animations --- */
+        
+        /* Animations */
         @keyframes successPop {
             0% { transform: scale(1); background-color: var(--success); }
             50% { transform: scale(1.1); box-shadow: 0 0 30px var(--success); }
             100% { transform: scale(0); opacity: 0; margin: 0; padding: 0; height: 0; }
         }
-
         .completed-anim {
             animation: successPop 0.8s forwards ease-in-out;
-            pointer-events: none;
-            background-color: var(--success) !important;
-            color: black;
-            border: none;
+            pointer-events: none; background-color: var(--success) !important; color: black; border: none;
         }
 
         /* Confetti */
         .confetti {
-            position: fixed;
-            width: 10px;
-            height: 10px;
-            background-color: #f00;
-            animation: fall linear forwards;
-            z-index: 2000;
-            pointer-events: none;
+            position: fixed; width: 10px; height: 10px; background-color: #f00; 
+            animation: fall linear forwards; z-index: 2000; pointer-events: none;
         }
-        @keyframes fall {
-            to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-        }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
         
-        /* Firework Particles */
         .firework-particle {
-            position: fixed;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            z-index: 2001;
-            pointer-events: none;
-            animation: fireworkFly 1s ease-out forwards;
-            box-shadow: 0 0 8px currentColor;
+            position: fixed; width: 6px; height: 6px; border-radius: 50%; z-index: 2001; 
+            pointer-events: none; animation: fireworkFly 1s ease-out forwards; box-shadow: 0 0 8px currentColor;
         }
-        
         @keyframes fireworkFly {
             0% { transform: translate(0, 0) scale(1); opacity: 1; }
             100% { transform: translate(var(--dx), var(--dy)) scale(0.5); opacity: 0; }
@@ -328,25 +430,15 @@
 
         /* Empty State */
         .empty-state {
-            text-align: center;
-            color: #555;
-            margin-top: 40px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
+            text-align: center; color: #555; margin-top: 40px; 
+            display: flex; flex-direction: column; align-items: center; width: 100%;
         }
         .empty-state img {
-            max-width: 90%;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            width: 350px;
+            max-width: 90%; border-radius: 15px; margin-bottom: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); width: 350px;
         }
         .empty-state p {
-            font-size: 1.2em;
-            color: var(--success);
-            font-weight: 300;
+            font-size: 1.2em; color: var(--accent); font-weight: 300;
         }
 
     </style>
@@ -357,6 +449,16 @@
 
     <!-- Glow Effect for heavy load -->
     <div id="bottomGlow" class="bottom-glow"></div>
+
+    <!-- PINNED TASK SECTION -->
+    <div id="pinned-section">
+        <div class="pinned-card">
+            <!-- Labels removed as requested -->
+            <div id="pinned-content">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
 
     <!-- Floating Action Button -->
     <button class="fab" onclick="togglePopup()">+</button>
@@ -372,6 +474,21 @@
 
             <label>Due Date</label>
             <input type="date" id="dateInput">
+
+            <!-- TABS SECTION -->
+            <label>Add a Tab (Optional)</label>
+            <div class="tabs-section">
+                <div class="saved-tabs-list" id="savedTabsList">
+                    <!-- Saved tabs appear here -->
+                </div>
+                <div class="new-tab-inputs">
+                    <input type="text" id="newTabName" placeholder="New tab name" style="margin-bottom:0; font-size: 0.9em;">
+                    <input type="color" id="newTabColor" class="color-picker" value="#bb86fc">
+                    <button class="add-btn small-btn" onclick="saveNewTab()">Save</button>
+                </div>
+                <input type="hidden" id="selectedTabName">
+                <input type="hidden" id="selectedTabColor">
+            </div>
 
             <div class="slider-container">
                 <label>Assignment Size (1-5): <span id="sizeVal" style="color:var(--accent); font-weight:bold;">1</span></label>
@@ -389,8 +506,20 @@
     <script>
         // 1. Initialize State
         let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
+        let savedTabs = JSON.parse(localStorage.getItem('myTabs')) || [];
+        let pinnedTaskId = localStorage.getItem('pinnedTaskId') || null;
+
+        tasks.forEach(t => {
+            if(!t.id) t.id = Date.now() + Math.random();
+            if(!t.createdAt) t.createdAt = Date.now();
+        });
+
         const listEl = document.getElementById('todo-list');
         const glowEl = document.getElementById('bottomGlow');
+        const pinnedSection = document.getElementById('pinned-section');
+        const pinnedContent = document.getElementById('pinned-content');
+        const todayDate = new Date();
+        todayDate.setHours(0,0,0,0);
 
         // 2. Toggle Popup
         function togglePopup() {
@@ -398,81 +527,127 @@
             if(document.body.classList.contains('popup-active')) {
                 document.getElementById('taskInput').focus();
                 
-                // Set default date to today so calendar opens on current month/day
                 const today = new Date().toISOString().split('T')[0];
                 const dateInput = document.getElementById('dateInput');
-                if(!dateInput.value) {
-                    dateInput.value = today;
-                }
+                if(!dateInput.value) dateInput.value = today;
+
+                renderSavedTabs();
+                clearSelectedTab();
             }
+        }
+
+        // --- TABS LOGIC ---
+        function renderSavedTabs() {
+            const container = document.getElementById('savedTabsList');
+            container.innerHTML = '';
+            savedTabs.forEach((tab, index) => {
+                const chip = document.createElement('div');
+                chip.className = 'tab-chip';
+                chip.style.backgroundColor = tab.color;
+                chip.innerText = tab.name;
+                chip.onclick = () => selectTab(tab.name, tab.color, chip);
+                container.appendChild(chip);
+            });
+        }
+
+        function saveNewTab() {
+            const name = document.getElementById('newTabName').value.trim();
+            const color = document.getElementById('newTabColor').value;
+            if(name) {
+                savedTabs.push({ name, color });
+                localStorage.setItem('myTabs', JSON.stringify(savedTabs));
+                document.getElementById('newTabName').value = '';
+                renderSavedTabs();
+                const chips = document.getElementById('savedTabsList').children;
+                if(chips.length > 0) chips[chips.length-1].click();
+            }
+        }
+
+        function selectTab(name, color, chipElement) {
+            const allChips = document.querySelectorAll('.tab-chip');
+            allChips.forEach(c => c.classList.remove('selected'));
+            chipElement.classList.add('selected');
+
+            document.getElementById('selectedTabName').value = name;
+            document.getElementById('selectedTabColor').value = color;
+        }
+
+        function clearSelectedTab() {
+            document.getElementById('selectedTabName').value = '';
+            document.getElementById('selectedTabColor').value = '';
+            const allChips = document.querySelectorAll('.tab-chip');
+            allChips.forEach(c => c.classList.remove('selected'));
         }
 
         // 3. Render List
         function renderTasks() {
             listEl.innerHTML = '';
             
-            // Sort: Closest date first
             tasks.sort((a, b) => {
                 if (!a.date) return 1;
                 if (!b.date) return -1;
                 return new Date(a.date) - new Date(b.date);
             });
 
-            // Calculate Load Score for Visual Effects
             let loadScore = 0;
-            tasks.forEach(task => {
-                if (parseInt(task.size) >= 4) {
-                    loadScore += parseInt(task.size);
-                }
-            });
-            updateVisuals(loadScore);
+            let pinnedTask = null;
 
-            // Empty State
             if (tasks.length === 0) {
                 listEl.innerHTML = `
                     <div class="empty-state">
                         <img src="https://cdn.decrypt.co/wp-content/uploads/2024/11/chillguy-gID_7.jpg" alt="Chill guy">
                         <p>Nothing here, you're all good to chill.</p>
                     </div>`;
+                pinnedSection.style.display = 'none';
+                updateVisuals(0);
                 return;
             }
 
-            const todayDate = new Date();
-            todayDate.setHours(0,0,0,0);
-
-            // Render Items
             tasks.forEach((task, index) => {
+                if (parseInt(task.size) >= 4) loadScore += parseInt(task.size);
+                if (task.id == pinnedTaskId) pinnedTask = task;
+
                 const li = document.createElement('li');
-                li.className = `todo-item size-${task.size}`;
-                li.id = `task-${index}`;
+                
+                let isOverdue = false;
+                if(task.date) {
+                    const d = new Date(task.date + 'T00:00:00');
+                    if(d < todayDate) isOverdue = true;
+                }
+
+                li.className = `todo-item size-${task.size} ${isOverdue ? 'overdue' : ''}`;
+                li.id = `task-${task.id}`;
                 
                 const progressColor = `linear-gradient(90deg, var(--accent) ${task.progress}%, #333 ${task.progress}%)`;
                 
                 let dateDisplay = '';
-                let fontSize = '0.9em'; // Default size
+                let fontSize = '0.9em'; 
 
                 if (task.date) {
                     const taskDate = new Date(task.date + 'T00:00:00'); 
                     dateDisplay = taskDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-                    // Calculate days difference for font scaling
                     const diffTime = taskDate - todayDate;
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                    // Scale font based on proximity
-                    if (diffDays <= 1) { // Today or past due
-                        fontSize = '1.4em';
-                    } else if (diffDays <= 3) { // Within 3 days
-                        fontSize = '1.2em';
-                    } else if (diffDays <= 7) { // Within a week
-                        fontSize = '1.0em';
-                    }
+                    if (diffDays <= 1) fontSize = '1.4em';
+                    else if (diffDays <= 3) fontSize = '1.2em';
+                    else if (diffDays <= 7) fontSize = '1.0em';
                 }
 
-                // FIX: Input uses class date-input-overlay for better pointer handling
+                // Tab Badge (Curved folder style)
+                let tabHtml = '';
+                if(task.tabName) {
+                    tabHtml = `<div class="tab-badge" style="background-color: ${task.tabColor}">${task.tabName}</div>`;
+                }
+
+                const pinClass = (task.id == pinnedTaskId) ? 'active' : '';
+
                 li.innerHTML = `
+                    ${tabHtml}
                     <div class="todo-header">
-                        <span class="todo-title">${task.text}</span>
+                        <span class="todo-title">
+                            <span class="overdue-icon">⚠️</span>
+                            ${task.text}
+                        </span>
                         ${dateDisplay ? `
                             <span class="todo-date" style="font-size: ${fontSize}">
                                 ${dateDisplay}
@@ -482,6 +657,11 @@
                                        value="${task.date}">
                             </span>
                         ` : ''}
+                        <button class="pin-btn ${pinClass}" onclick="togglePin('${task.id}')">
+                            <svg class="pin-icon" viewBox="0 0 24 24">
+                                <path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z" />
+                            </svg>
+                        </button>
                     </div>
                     <div class="progress-wrapper">
                         <div class="progress-label">${task.progress}% Done</div>
@@ -496,6 +676,75 @@
                 `;
                 listEl.appendChild(li);
             });
+
+            updateVisuals(loadScore);
+            renderPinnedTask(pinnedTask);
+        }
+
+        // --- PINNED LOGIC ---
+        function togglePin(id) {
+            if(pinnedTaskId == id) {
+                pinnedTaskId = null;
+            } else {
+                pinnedTaskId = id;
+            }
+            localStorage.setItem('pinnedTaskId', pinnedTaskId);
+            renderTasks();
+        }
+
+        function renderPinnedTask(task) {
+            if(!task) {
+                pinnedSection.style.display = 'none';
+                return;
+            }
+
+            pinnedSection.style.display = 'block';
+            
+            // Urgency %
+            let timePercent = 0;
+            let dateDisplay = 'No Date';
+            let fontSize = '1.2em';
+
+            if(task.date) {
+                const start = task.createdAt || (Date.now() - 86400000); 
+                const due = new Date(task.date + 'T23:59:59').getTime();
+                const now = Date.now();
+                const totalDuration = due - start;
+                const elapsed = now - start;
+                
+                if(totalDuration > 0) {
+                    timePercent = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+                } else {
+                    timePercent = 100; 
+                }
+
+                // Format Date neatly for pinned card
+                const taskDate = new Date(task.date + 'T00:00:00'); 
+                dateDisplay = taskDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const diffTime = taskDate - todayDate;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                if (diffDays <= 1) fontSize = '1.5em';
+                else if (diffDays <= 3) fontSize = '1.3em';
+            }
+
+            pinnedContent.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h2 style="margin: 0; font-weight: 300;">${task.text}</h2>
+                    <div style="text-align:right;">
+                        <span style="font-size:${fontSize}; font-weight:bold; color:white;">${dateDisplay}</span>
+                    </div>
+                </div>
+                
+                <div class="pinned-stat-label">Time Progress</div>
+                <div class="time-bar-bg">
+                    <div class="time-bar-fill" style="width: ${timePercent}%"></div>
+                </div>
+
+                <div class="pinned-stat-label">Progress (${task.progress}%)</div>
+                <div class="completion-bar-bg">
+                    <div class="completion-bar-fill" style="width: ${task.progress}%"></div>
+                </div>
+            `;
         }
 
         function updateDate(index, newDate) {
@@ -505,7 +754,6 @@
             }
         }
 
-        // Handle Visuals (Glow + Background Darkening)
         function updateVisuals(score) {
             if (score < 4) {
                 glowEl.style.height = '0';
@@ -514,23 +762,20 @@
             } else {
                 const intensity = Math.min(score / 25, 0.9); 
                 const height = Math.min(score * 20, 350); 
-
                 glowEl.style.height = height + 'px';
                 glowEl.style.setProperty('--heavy-glow', `rgba(88, 86, 255, ${intensity})`);
-                
-                if (score > 8) {
-                    document.body.style.backgroundColor = '#050505'; 
-                } else {
-                    document.body.style.backgroundColor = '#0e0e0e';
-                }
+                if (score > 8) document.body.style.backgroundColor = '#050505'; 
+                else document.body.style.backgroundColor = '#0e0e0e';
             }
         }
 
-        // 4. Add Task
         function addTask() {
             const textInput = document.getElementById('taskInput');
             const dateInput = document.getElementById('dateInput');
             const sizeInput = document.getElementById('sizeInput');
+            
+            const tabName = document.getElementById('selectedTabName').value;
+            const tabColor = document.getElementById('selectedTabColor').value;
 
             if (textInput.value.trim() === "") {
                 textInput.style.borderColor = "var(--error)";
@@ -539,10 +784,14 @@
             }
 
             const newTask = {
+                id: Date.now(),
+                createdAt: Date.now(),
                 text: textInput.value,
                 date: dateInput.value,
                 size: sizeInput.value,
-                progress: 0
+                progress: 0,
+                tabName: tabName || null,
+                tabColor: tabColor || null
             };
 
             tasks.push(newTask);
@@ -555,7 +804,6 @@
             togglePopup();
         }
 
-        // 5. Update Progress & Confetti
         function updateProgress(index, value, element) {
             tasks[index].progress = value;
             element.style.background = `linear-gradient(90deg, var(--accent) ${value}%, #333 ${value}%)`;
@@ -563,25 +811,31 @@
 
             if (value == 100) {
                 const task = tasks[index];
-                const taskItem = document.getElementById(`task-${index}`);
-                taskItem.classList.add('completed-anim');
+                const taskItem = document.getElementById(`task-${task.id}`);
+                if(taskItem) taskItem.classList.add('completed-anim');
                 
+                if(task.id == pinnedTaskId) {
+                    pinnedTaskId = null;
+                    localStorage.removeItem('pinnedTaskId');
+                }
+
                 const isBigTask = parseInt(task.size) >= 4;
                 spawnConfetti(isBigTask);
-                
-                if (isBigTask) {
-                    spawnFireworks();
-                }
+                if (isBigTask) spawnFireworks();
 
                 setTimeout(() => {
                     deleteTask(index);
                 }, 800);
             } else {
                 localStorage.setItem('myTasks', JSON.stringify(tasks));
+                // If this is the pinned task, re-render pin section to update progress bar
+                const task = tasks[index];
+                if (task.id == pinnedTaskId) {
+                    renderPinnedTask(task);
+                }
             }
         }
 
-        // 6. Confetti Logic
         function spawnConfetti(isBig) {
             const count = isBig ? 300 : 50; 
             const colors = isBig 
@@ -609,17 +863,10 @@
             }
         }
 
-        // 7. Fireworks Logic (Bombastic Version)
         function spawnFireworks() {
             const colors = ['#FFD700', '#00ff00', '#ff00ff', '#00ffff', '#ffffff', '#ff4500'];
-            
-            for(let i=0; i<80; i++) {
-                createFireworkParticle(0, window.innerHeight, colors);
-            }
-            
-            for(let i=0; i<80; i++) {
-                createFireworkParticle(window.innerWidth, window.innerHeight, colors);
-            }
+            for(let i=0; i<80; i++) createFireworkParticle(0, window.innerHeight, colors);
+            for(let i=0; i<80; i++) createFireworkParticle(window.innerWidth, window.innerHeight, colors);
         }
 
         function createFireworkParticle(x, y, colors) {
@@ -630,7 +877,6 @@
             p.style.top = y + 'px';
 
             const xDir = x === 0 ? 1 : -1;
-            
             const destX = (Math.random() * 400 + 50) * xDir + 'px';
             const destY = -(Math.random() * 600 + 200) + 'px'; 
 
